@@ -3,6 +3,7 @@ const method = process.argv[2]
 
 process.stdin.setEncoding('utf8')
 console.log("Hello")
+
 if (method.toUpperCase() === 'POST') {
   const content_length = parseInt(process.argv[3])
   let length = 0

@@ -13,13 +13,13 @@ int getarg(const int argc, \
 	   const char *const argv[], \
 	   const char opt_string[])
 {
-	static int i = 1;
 	/* Always init i with 1, because 0 is the program name. */
-	static int j = 1;
+	static int i = 1;
 	/* Always init j with 1, because 0 is OPT_START. */
+	static int j = 1;
+	/* Temp i and j for an option followed by a value. */
 	int temp_i = 0;
 	int temp_j = 0;
-	/* Temp i and j for an option followed by a value. */
 	while (i < argc) {
 		argopt = NULL;
 		if (argv[i][0] != OPT_START) {
@@ -42,7 +42,7 @@ int getarg(const int argc, \
 			/* Not a valid option. But just return it. */
 			return argv[i][j++];
 		} else if (*(strchr(opt_string, argv[i][j]) + 1) != ':') {
-			/* Options not finished. */
+			/* Options finished. */
 			return argv[i][j++];
 		} else if (*(strchr(opt_string, argv[i][j]) + 1) == ':') {
 			/* An option followed by a value. */
@@ -54,8 +54,8 @@ int getarg(const int argc, \
 				temp_i = i;
  				temp_j = j;
 				argopt = argv[++i];
-				i++;
 				/* Increase i to skip value in next loop. */
+				++i;
  				j = 1;
  				return argv[temp_i][temp_j];
 			} else {

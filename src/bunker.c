@@ -51,13 +51,13 @@ size_t read_line(int sock, char *buffer, size_t size)
 	size_t i = 0;
 	char ch = '\0';
 	// size - 1: 1 byte for '\0'.
-	while ((i < size - 1) && (ch != '\n')) {
+	while (i < size - 1 && ch != '\n') {
 		if (recv(sock, &ch, 1, 0) > 0) {
 			// If we meet '/r', we need to see whether next is '\n'.
 			if (ch == '\r') {
 				// Set MEG_PEEK will leave the read char in stream.
 				ssize_t n = recv(sock, &ch, 1, MSG_PEEK);
-				if ((n > 0) && (ch == '\n'))
+				if (n > 0 && ch == '\n')
 					// If we got '\n', read it.
 					recv(sock, &ch, 1, 0);
 				else
@@ -134,7 +134,7 @@ void accept_request(int client, const char *dir)
 	LOG("Bunker[%d]: DEBUG: %s: %d: PATH: %s\n", getpid(), __FILE__, __LINE__, path);
 #endif
 	if (!strlen(path))
-		strncat(path, "/", sizeof(path) - strlen(path) - 1);
+		strncat(path, "./", sizeof(path) - strlen(path) - 1);
 	if (path[strlen(path) - 1] == '/')
 		strncat(path, "index.html", sizeof(path) - strlen(path) - 1);
 	if (stat(path, &state) == -1) {
@@ -157,9 +157,6 @@ void accept_request(int client, const char *dir)
 			string_length = 1;
 			while (string_length > 0 && strcmp("\n", buffer))
 				string_length = read_line(client, buffer, sizeof(buffer));
-#ifdef __DEBUG__
-			LOG("Bunker[%d]: DEBUG: %s: %d: %s\n", getpid(), __FILE__, __LINE__, path);
-#endif
 			send_file(client, &code, path);
 		} else {
 #ifdef __DEBUG__
@@ -215,7 +212,7 @@ void execute_cgi(int client, unsigned short *codep, const char *path, const char
 	int cgi_input[2];
 	int status;
 	size_t string_length = 1;
-	size_t content_length = -1;
+	int content_length = -1;
 	if (!strcasecmp(method, "GET")) {
 		while (string_length > 0 && strcmp("\n", buffer))
 			string_length = read_line(client, buffer, sizeof(buffer));
@@ -224,10 +221,10 @@ void execute_cgi(int client, unsigned short *codep, const char *path, const char
 		while (string_length > 0 && strcmp("\n", buffer)) {
 	        	buffer[strlen("Content-Length:")] = '\0';
 	        	if (strcasecmp(buffer, "Content-Length:") == 0)
-	        		content_length = strtol(&buffer[16], NULL, 10);
+	        		content_length = strtol(&buffer[strlen("Content-Length:") + 1], NULL, 10);
 		        string_length = read_line(client, buffer, sizeof(buffer));
 	        }
-		if (content_length == -1) {
+		if (content_length < 0) {
 	         	throw_bad_request(client, codep);
 	         	return;
 	        }
@@ -236,6 +233,7 @@ void execute_cgi(int client, unsigned short *codep, const char *path, const char
 	strncpy(buffer, "HTTP/1.0 200 OK\r\n", sizeof(buffer));
 	send(client, buffer, strlen(buffer), 0);
 	strncpy(buffer, "Content-Type: text/plain\r\n", sizeof(buffer));
+	send(client, buffer, strlen(buffer), 0);
 	strncpy(buffer, "\r\n", sizeof(buffer));
 	send(client, buffer, strlen(buffer), 0);
 
@@ -287,7 +285,7 @@ void execute_cgi(int client, unsigned short *codep, const char *path, const char
 			execl(path, path, method, query_string, NULL);
 	        } else if (!strcasecmp(method, "POST")) {
 			char buffer[1024];
-			snprintf(buffer, sizeof(buffer), "%lu", content_length);
+			snprintf(buffer, sizeof(buffer), "%d", content_length);
 			execl(path, path, method, buffer, NULL);
 	        }
 		exit(EXIT_SUCCESS);
@@ -386,13 +384,12 @@ void throw_bad_request(int client, unsigned short *codep)
 
 int start_server(const char *address, unsigned short port, const char *dir, const char *log_file, bool debug)
 {
-	int httpd = 0;
+	int httpd = -1;
 	g_debug = debug;
 	if (!g_debug)
 		if (!(logp = fopen(log_file, "a+")))
 			perror("Log Error");
 	int af = AF_INET;
-	af = AF_INET;
 	if (address && strchr(address, ':'))
 		af = AF_INET6;
 	if (af == AF_INET) {
@@ -433,6 +430,7 @@ int start_server(const char *address, unsigned short port, const char *dir, cons
 
 void stop_server(int server)
 {
-	fclose(logp);
+	if (logp)
+		fclose(logp);
 	close(server);
 }

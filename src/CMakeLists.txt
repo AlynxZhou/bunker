@@ -1,0 +1,6 @@
+aux_source_directory("." BUNKER_SRCS)
+add_subdirectory("getarg")
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
+set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
+add_executable("bunker" ${BUNKER_SRCS})
+target_link_libraries("bunker" "getarg")

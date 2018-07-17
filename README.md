@@ -7,6 +7,7 @@ A simple HTTP server with daemonize and CGI support. (HTTP 1.0 only.)
 # Usage:
 
 ```
+$ mkdir build
 $ cd build
 $ cmake -DCMAKE_BUILD_TYPE=Debug ..
 $ make

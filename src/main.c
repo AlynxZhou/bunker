@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
 	socklen_t client_name_length = sizeof(client_name);
 	bool debug = false;
 	int opt = -1;
-	while ((opt = getarg(argc, (const char *const *)argv, OPT_STRING)) != -1) {
+	while ((opt = getarg(argc, (const char *const *)argv,
+			     OPT_STRING)) != -1) {
 		switch (opt) {
 		case 'h':
 			print_help();
@@ -84,7 +85,9 @@ int main(int argc, char *argv[])
 	}
 	server_sock = start_server(address, port, dir, log_file, debug);
 	while (true) {
-		client_sock = accept(server_sock, (struct sockaddr *)&client_name, &client_name_length);
+		client_sock = accept(server_sock,
+				     (struct sockaddr *)&client_name,
+				     &client_name_length);
 		if (client_sock == -1)
 			error("Accept Error");
 		accept_request(client_sock, dir);

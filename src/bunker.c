@@ -203,8 +203,9 @@ void send_headers(int client, const char *path)
 	send(client, buffer, strlen(buffer), 0);
 	strncpy(buffer, SERVER_STRING, sizeof(buffer));
 	send(client, buffer, strlen(buffer), 0);
-	strncpy(buffer, "Content-Type: text/html\r\n", sizeof(buffer));
-	send(client, buffer, strlen(buffer), 0);
+	//strncpy(buffer, "Content-Type: text/html\r\n",
+	//sizeof(buffer));
+	//send(client, buffer, strlen(buffer), 0);
 	strncpy(buffer, "\r\n", sizeof(buffer));
 	send(client, buffer, strlen(buffer), 0);
 }
@@ -215,9 +216,16 @@ void cat(int client, const char *path)
 	if (!(fp = fopen(path, "r"))) {
 		return;
 	}
-	char buffer[1024];
-	while(fgets(buffer, sizeof(buffer), fp))
-		send(client, buffer, strlen(buffer), 0);
+	fseek(fp, 0L, SEEK_END);
+	int file_size = ftell(fp);
+	rewind(fp);
+	char *buffer = malloc(file_size);
+	fread(buffer, file_size, 1, fp);
+	send(client, buffer, file_size, 0);
+	free(buffer);
+	//char buffer[1024];
+	//while(fread(buffer, sizeof(buffer), 1, fp))
+		//send(client, buffer, strlen(buffer), 0);
 	fclose(fp);
 }
 
